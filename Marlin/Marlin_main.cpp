@@ -7088,6 +7088,7 @@ inline void gcode_M17() {
 
 #if ENABLED(SDSUPPORT)
 
+
   /**
    * M20: List SD card to serial output
    */
@@ -9758,6 +9759,20 @@ inline void gcode_M226() {
   }
 
 #endif // PIDTEMPBED
+
+	/**
+	 * M330 Sxx  pulse pin high for xx mSeconds
+	 * defaults to 500
+	 */
+
+	inline void gcode_M330() {
+		#define DEFAULT_PULS_WIDTH  10
+		uint16_t pulse_msec = parser.seen('S') ? parser.value_int() : DEFAULT_PULS_WIDTH;
+		planner.synchronize();             // wait for head to reach destination (replaces M400)
+		WRITE(FAN_PIN, 	HIGH);
+		safe_delay(pulse_msec);
+		WRITE(FAN_PIN, LOW);
+}
 
 #if defined(CHDK) || HAS_PHOTOGRAPH
 
@@ -12535,6 +12550,8 @@ void process_parsed_command() {
         case 304: gcode_M304(); break;                            // M304: Set Bed PID parameters
       #endif
 
+      case 330: gcode_M330(); break;                              // M330: Pulse high
+
       #if HAS_MICROSTEPS
         case 350: gcode_M350(); break;                            // M350: Set microstepping mode. Warning: Steps per unit remains unchanged. S code sets stepping mode for all drivers.
         case 351: gcode_M351(); break;                            // M351: Toggle MS1 MS2 pins directly, S# determines MS1 or MS2, X# sets the pin high/low.
@@ -14544,6 +14561,8 @@ void setup() {
   stepper.init();           // Init stepper. This enables interrupts!
 
   servo_init();             // Initialize all servos, stow servo probe
+
+  OUT_WRITE(FAN_PIN, LOW);
 
   #if HAS_PHOTOGRAPH
     OUT_WRITE(PHOTOGRAPH_PIN, LOW);
